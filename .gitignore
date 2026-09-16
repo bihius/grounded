@@ -1,7 +1,10 @@
 /vendor
 /node_modules
 /.env
+/database/*.sqlite
 /storage/*.key
+/storage/framework/views/*
+/storage/logs/*
 .DS_Store
 /public/build
 .venv
