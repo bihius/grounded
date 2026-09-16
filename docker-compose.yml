@@ -2,8 +2,14 @@ services:
   app:
     image: php:8.4-cli
     working_dir: /var/www/html
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    environment:
+      CACHE_STORE: file
+      SESSION_DRIVER: file
     volumes:
       - .:/var/www/html
+    ports:
+      - "8000:8000"
     depends_on:
       - postgres
       - redis
