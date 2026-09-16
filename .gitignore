@@ -1,6 +1,7 @@
 /vendor
 /node_modules
 /.env
+/AGENTS.md
 /database/*.sqlite
 /storage/*.key
 /storage/framework/views/*
