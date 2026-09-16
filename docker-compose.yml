@@ -1,10 +1,18 @@
 services:
   app:
-    image: php:8.4-cli
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /var/www/html
     command: php artisan serve --host=0.0.0.0 --port=8000
     environment:
       CACHE_STORE: file
+      DB_CONNECTION: pgsql
+      DB_DATABASE: grounded
+      DB_HOST: postgres
+      DB_PASSWORD: grounded
+      DB_PORT: 5432
+      DB_USERNAME: grounded
       SESSION_DRIVER: file
     volumes:
       - .:/var/www/html
