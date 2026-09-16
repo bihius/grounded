@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
+use App\Services\DocumentChunker;
 use Illuminate\Http\Request;
 
 class DocumentController extends Controller
@@ -41,5 +42,10 @@ class DocumentController extends Controller
         $document->delete();
 
         return response()->noContent();
+    }
+
+    public function chunk(Document $document, DocumentChunker $chunker)
+    {
+        return $chunker->chunk($document);
     }
 }
