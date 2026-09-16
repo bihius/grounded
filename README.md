@@ -1,6 +1,7 @@
-# Latarnik
+# Grounded
 
-Asystent FAQ dla firmowej bazy wiedzy. Odpowiada na pytania na podstawie
+Asystent FAQ dla firmowej bazy wiedzy. Nazwa od *grounding*: odpowiedzi są
+osadzone w źródłach, a nie zmyślane. Odpowiada na pytania na podstawie
 wgranych dokumentów, pokazuje źródła odpowiedzi, a kiedy nie znajdzie
 odpowiedzi w bazie - mówi „nie wiem” zamiast zmyślać.
 
