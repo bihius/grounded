@@ -1,0 +1,8 @@
+/vendor
+/node_modules
+/.env
+/storage/*.key
+.DS_Store
+/public/build
+.venv
+.ipynb_checkpoints
