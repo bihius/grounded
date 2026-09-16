@@ -5,3 +5,5 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/documents', [DocumentController::class, 'index']);
 Route::post('/documents', [DocumentController::class, 'store']);
+Route::match(['put', 'patch'], '/documents/{document}', [DocumentController::class, 'update']);
+Route::delete('/documents/{document}', [DocumentController::class, 'destroy']);

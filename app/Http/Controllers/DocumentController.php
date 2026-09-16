@@ -22,4 +22,24 @@ class DocumentController extends Controller
 
         return Document::create($data);
     }
+
+    public function update(Request $request, Document $document)
+    {
+        $data = $request->validate([
+            'title' => ['sometimes', 'string', 'max:255'],
+            'content' => ['sometimes', 'string'],
+            'source_url' => ['sometimes', 'nullable', 'url'],
+        ]);
+
+        $document->update($data);
+
+        return $document->refresh();
+    }
+
+    public function destroy(Document $document)
+    {
+        $document->delete();
+
+        return response()->noContent();
+    }
 }
