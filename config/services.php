@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'ollama' => [
+        'url' => env('OLLAMA_URL', 'http://localhost:11434'),
+        'embedding_model' => env('OLLAMA_EMBEDDING_MODEL', 'bge-m3'),
+    ],
+
 ];
