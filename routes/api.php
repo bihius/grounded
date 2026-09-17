@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/documents', [DocumentController::class, 'index']);
 Route::get('/search', [DocumentController::class, 'search']);
+Route::post('/chat', ChatController::class);
 Route::post('/documents', [DocumentController::class, 'store']);
 Route::post('/documents/import', [DocumentController::class, 'import']);
 Route::match(['put', 'patch'], '/documents/{document}', [DocumentController::class, 'update']);
