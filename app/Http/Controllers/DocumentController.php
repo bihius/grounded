@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ChunkDocument;
 use App\Models\Document;
 use App\Services\DocumentChunker;
 use Illuminate\Http\Request;
+use Smalot\PdfParser\Parser;
 
 class DocumentController extends Controller
 {
@@ -22,6 +24,26 @@ class DocumentController extends Controller
         ]);
 
         return Document::create($data);
+    }
+
+    public function import(Request $request)
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'file' => ['required', 'file', 'mimes:md,markdown,txt,pdf'],
+            'source_url' => ['nullable', 'url'],
+        ]);
+
+        $file = $request->file('file');
+        $data['content'] = strtolower($file->getClientOriginalExtension()) === 'pdf'
+            ? (new Parser)->parseFile($file->getRealPath())->getText()
+            : $file->get();
+        unset($data['file']);
+
+        $document = Document::create($data);
+        ChunkDocument::dispatch($document);
+
+        return $document;
     }
 
     public function update(Request $request, Document $document)
