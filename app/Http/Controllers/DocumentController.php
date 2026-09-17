@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ChunkDocument;
 use App\Models\Document;
 use App\Services\DocumentChunker;
+use App\Services\SimilarChunkSearch;
 use Illuminate\Http\Request;
 use Smalot\PdfParser\Parser;
 
@@ -13,6 +14,16 @@ class DocumentController extends Controller
     public function index()
     {
         return Document::all();
+    }
+
+    public function search(Request $request, SimilarChunkSearch $search)
+    {
+        $data = $request->validate([
+            'q' => ['required', 'string'],
+            'limit' => ['sometimes', 'integer', 'min:1', 'max:20'],
+        ]);
+
+        return $search->search($data['q'], $data['limit'] ?? 5);
     }
 
     public function store(Request $request)
