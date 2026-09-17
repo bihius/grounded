@@ -1,7 +1,12 @@
 /vendor
 /node_modules
 /.env
+/AGENTS.md
+/docs/PLAN.md
+/database/*.sqlite
 /storage/*.key
+/storage/framework/views/*
+/storage/logs/*
 .DS_Store
 /public/build
 .venv
