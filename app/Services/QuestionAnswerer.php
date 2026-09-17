@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class QuestionAnswerer
 {
@@ -10,7 +11,17 @@ class QuestionAnswerer
 
     public function answer(string $question, int $limit = 5): array
     {
-        $chunks = $this->search->search($question, $limit);
+        $chunks = $this->search->search($question, $limit)
+            ->filter(fn ($chunk) => $chunk->distance <= config('services.rag.max_distance'))
+            ->values();
+
+        if ($chunks->isEmpty()) {
+            return [
+                'answer' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.',
+                'sources' => [],
+            ];
+        }
+
         $context = $chunks->map(fn ($chunk) => "[{$chunk->title}]\n{$chunk->content}")->implode("\n\n");
         $prompt = "Answer the question using only the context below. Cite the document title in your answer.\n\n"
             ."Question: {$question}\n\nContext:\n{$context}";
@@ -31,6 +42,7 @@ class QuestionAnswerer
                 'document_id' => $chunk->document_id,
                 'position' => $chunk->position,
                 'distance' => $chunk->distance,
+                'excerpt' => Str::limit($chunk->content, 240),
             ])->values(),
         ];
     }

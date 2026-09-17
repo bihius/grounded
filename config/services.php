@@ -41,4 +41,8 @@ return [
         'chat_model' => env('OLLAMA_CHAT_MODEL', 'qwen3:8b'),
     ],
 
+    'rag' => [
+        'max_distance' => (float) env('RAG_MAX_DISTANCE', 0.4),
+    ],
+
 ];

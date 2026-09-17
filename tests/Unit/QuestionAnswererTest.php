@@ -36,8 +36,28 @@ class QuestionAnswererTest extends TestCase
 
         $this->assertSame('An ETF tracks an index. [ETF guide]', $result['answer']);
         $this->assertSame('ETF guide', $result['sources'][0]['title']);
+        $this->assertSame('An ETF tracks an index.', $result['sources'][0]['excerpt']);
         Http::assertSent(fn ($request) => str_contains($request['prompt'], 'An ETF tracks an index.')
             && $request['model'] === 'qwen3:8b'
             && $request['stream'] === false);
+    }
+
+    public function test_it_says_it_does_not_know_when_chunks_are_too_distant(): void
+    {
+        config(['services.rag.max_distance' => 0.4]);
+        $search = Mockery::mock(SimilarChunkSearch::class);
+        $search->expects('search')->with('What is Kubernetes?', 5)->andReturn(collect([
+            (object) ['distance' => 0.8],
+        ]));
+        Http::fake();
+
+        $result = (new QuestionAnswerer($search))->answer('What is Kubernetes?');
+
+        $this->assertSame(
+            'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.',
+            $result['answer']
+        );
+        $this->assertSame([], $result['sources']);
+        Http::assertNothingSent();
     }
 }
