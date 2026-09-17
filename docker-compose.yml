@@ -5,20 +5,8 @@ services:
       dockerfile: Dockerfile
     working_dir: /var/www/html
     command: php artisan serve --host=0.0.0.0 --port=8000
-    environment:
-      CACHE_STORE: file
-      DB_CONNECTION: pgsql
-      QUEUE_CONNECTION: redis
-      REDIS_HOST: redis
-      OLLAMA_URL: http://host.docker.internal:11434
-      OLLAMA_EMBEDDING_MODEL: bge-m3
-      OLLAMA_CHAT_MODEL: qwen3:8b
-      DB_DATABASE: grounded
-      DB_HOST: postgres
-      DB_PASSWORD: grounded
-      DB_PORT: 5432
-      DB_USERNAME: grounded
-      SESSION_DRIVER: file
+    env_file:
+      - .env
     volumes:
       - .:/var/www/html
     ports:
@@ -33,17 +21,8 @@ services:
       dockerfile: Dockerfile
     working_dir: /var/www/html
     command: php artisan queue:work redis --sleep=1 --tries=3 --timeout=120
-    environment:
-      DB_CONNECTION: pgsql
-      DB_DATABASE: grounded
-      DB_HOST: postgres
-      DB_PASSWORD: grounded
-      DB_PORT: 5432
-      DB_USERNAME: grounded
-      QUEUE_CONNECTION: redis
-      REDIS_HOST: redis
-      OLLAMA_URL: http://host.docker.internal:11434
-      OLLAMA_EMBEDDING_MODEL: bge-m3
+    env_file:
+      - .env
     volumes:
       - .:/var/www/html
     depends_on:
@@ -52,10 +31,8 @@ services:
 
   postgres:
     image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_DB: grounded
-      POSTGRES_USER: grounded
-      POSTGRES_PASSWORD: grounded
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
