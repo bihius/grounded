@@ -12,9 +12,14 @@ class DocumentImportTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Queue::fake();
+    }
+
     public function test_markdown_file_can_be_imported_as_a_document(): void
     {
-        Queue::fake();
         $content = "# Grounded\n\nTo jest dokument Markdown.";
         $file = UploadedFile::fake()->createWithContent('guide.md', $content);
 
