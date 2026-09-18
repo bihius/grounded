@@ -6,9 +6,21 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_the_application_returns_a_successful_response(): void
+    public static function pageProvider(): array
     {
-        $response = $this->get('/');
+        return [
+            'chat' => ['/'],
+            'documents' => ['/documents'],
+            'questions' => ['/questions'],
+        ];
+    }
+
+    /**
+     * @dataProvider pageProvider
+     */
+    public function test_the_application_returns_a_successful_response(string $path): void
+    {
+        $response = $this->get($path);
 
         $response->assertStatus(200);
         $response->assertSee('<div id="app">', false);
