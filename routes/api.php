@@ -12,6 +12,7 @@ Route::post('/chat/stream', [ChatController::class, 'stream']);
 Route::post('/questions/{question}/feedback', [QuestionController::class, 'feedback']);
 Route::post('/documents', [DocumentController::class, 'store']);
 Route::post('/documents/import', [DocumentController::class, 'import']);
+Route::post('/documents/import-url', [DocumentController::class, 'importUrl']);
 Route::match(['put', 'patch'], '/documents/{document}', [DocumentController::class, 'update']);
 Route::delete('/documents/{document}', [DocumentController::class, 'destroy']);
 Route::post('/documents/{document}/chunk', [DocumentController::class, 'chunk']);

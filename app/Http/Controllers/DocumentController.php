@@ -7,7 +7,9 @@ use App\Models\Document;
 use App\Services\DocumentChunker;
 use App\Services\SimilarChunkSearch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Smalot\PdfParser\Parser;
+use Symfony\Component\DomCrawler\Crawler;
 
 class DocumentController extends Controller
 {
@@ -35,6 +37,31 @@ class DocumentController extends Controller
         ]);
 
         return Document::create($data);
+    }
+
+    public function importUrl(Request $request)
+    {
+        $data = $request->validate([
+            'url' => ['required', 'url'],
+            'title' => ['sometimes', 'string', 'max:255'],
+        ]);
+        $html = Http::timeout(20)->get($data['url'])->throw()->body();
+        $crawler = new Crawler($html, $data['url']);
+        $content = $crawler->filter('main')->count()
+            ? $crawler->filter('main')->text('', true)
+            : ($crawler->filter('article')->count()
+                ? $crawler->filter('article')->text('', true)
+                : $crawler->filter('body')->text('', true));
+        $title = $data['title'] ?? $crawler->filter('title')->text('Untitled page', true);
+        $document = Document::create([
+            'title' => $title,
+            'content' => $content,
+            'source_url' => $data['url'],
+            'indexing_status' => 'queued',
+        ]);
+        ChunkDocument::dispatch($document);
+
+        return $document;
     }
 
     public function import(Request $request)

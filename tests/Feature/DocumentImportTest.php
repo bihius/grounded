@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Jobs\ChunkDocument;
+use App\Models\Document;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -34,6 +36,27 @@ class DocumentImportTest extends TestCase
             'title' => 'Markdown guide',
             'content' => $content,
         ]);
+    }
+
+    public function test_web_page_can_be_imported_as_a_document(): void
+    {
+        Http::fake([
+            'https://example.test/guide' => Http::response(
+                '<html><head><title>Web guide</title></head><body><nav>Menu</nav><main><h1>Grounded</h1><p>Web content.</p></main></body></html>'
+            ),
+        ]);
+
+        $response = $this->postJson('/api/documents/import-url', [
+            'url' => 'https://example.test/guide',
+        ]);
+
+        $response->assertCreated();
+        Queue::assertPushed(ChunkDocument::class);
+        $document = Document::firstWhere('source_url', 'https://example.test/guide');
+        $this->assertSame('Web guide', $document->title);
+        $this->assertStringContainsString('Grounded', $document->content);
+        $this->assertStringContainsString('Web content.', $document->content);
+        $this->assertStringNotContainsString('Menu', $document->content);
     }
 
     public function test_pdf_file_can_be_imported_as_a_document(): void
