@@ -26,7 +26,11 @@ class QuestionAnswerer
                     'status' => 'needs_review',
                 ]);
                 echo 'data: '.json_encode(['type' => 'answer', 'content' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.'])."\n\n";
-                echo 'data: '.json_encode(['type' => 'done', 'sources' => []])."\n\n";
+                echo 'data: '.json_encode([
+                    'type' => 'done',
+                    'question_id' => $questionRecord->id,
+                    'sources' => [],
+                ])."\n\n";
 
                 return;
             }
@@ -62,7 +66,11 @@ class QuestionAnswerer
             }
 
             $questionRecord->update(['answer' => $answer]);
-            echo 'data: '.json_encode(['type' => 'done', 'sources' => $this->sources($chunks)])."\n\n";
+            echo 'data: '.json_encode([
+                'type' => 'done',
+                'question_id' => $questionRecord->id,
+                'sources' => $this->sources($chunks),
+            ])."\n\n";
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',
