@@ -99,7 +99,7 @@ The interface is at `http://localhost:8000`. First question, end to end:
 curl -X POST http://localhost:8000/api/documents/import \
   -F "title=ETF basics" -F "file=@notes.md"
 
-# Indexing runs in the background; wait for "ready".
+# Indexing runs in the background; wait for "completed".
 curl http://localhost:8000/api/documents
 
 curl -X POST http://localhost:8000/api/chat \
@@ -252,7 +252,8 @@ The variables that matter, from `.env.example`:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama's address. Must be `http://host.docker.internal:11434` when the application runs in Docker and Ollama on the host. |
+| `OLLAMA_URL` | `http://host.docker.internal:11434` | Ollama's address as seen from the application container. Use `http://localhost:11434` only when PHP also runs on the host. |
+| `REDIS_QUEUE_RETRY_AFTER` | `180` | Seconds before Redis re-delivers a job. Must stay above the worker `--timeout` (120). |
 | `OLLAMA_EMBEDDING_MODEL` | `bge-m3` | Model used for both document chunks and questions. Its output dimension must match the `vector(1024)` column. |
 | `OLLAMA_CHAT_MODEL` | `qwen3:8b` | Model that writes the answer from the retrieved context. |
 | `RAG_MAX_DISTANCE` | `0.6` | Cosine distance above which the closest chunk counts as irrelevant and the assistant declines to answer. Model-specific. |
@@ -272,9 +273,8 @@ What is simplified or missing, stated plainly:
 
 - **Chunking is character-based.** Fixed 500-character windows with a 50-character overlap, applied to the raw text. Sentences, paragraphs, headings and code blocks are all cut mid-stride, and a chunk may begin in the middle of a word. Nothing adapts to document structure.
 - **No vector index.** There is no HNSW or IVFFlat index on the embedding column, so every search is a sequential scan over all chunks. Fine for hundreds of chunks, not for hundreds of thousands.
-- **No authentication.** Every API route is public, including the ones that create and delete documents. CORS is Laravel's default, which allows any origin on `/api/*` — required for the widget, and far too open for a real deployment.
+- **No authentication.** Every API route is public, including the ones that create and delete documents. CORS allows any origin on `/api/*` — required for the widget, and far too open for a real deployment.
 - **`GET /api/documents` returns the full text of every document.** No pagination, no API Resources; the response grows with the corpus.
-- **`php artisan documents:watch` is broken.** The inbox watcher queries a `content_hash` column that no migration creates, so it fails with an undefined-column error. Import through the API or the interface instead.
 - **CI does not run the tests.** `.github/workflows/php.yml` validates `composer.json` and installs dependencies; the test step is commented out.
 - **Mixed languages.** The interface and the "I don't know" message are Polish, the code and prompts are English. The prompt does not ask the model to answer in the question's language, so the language of an answer depends on the model and the retrieved context.
 - **PDF extraction is text-only.** `smalot/pdfparser` reads the text layer; scanned documents without one produce empty content, and there is no OCR.

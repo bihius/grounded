@@ -90,7 +90,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DocumentInput'
       responses:
-        '200':
+        '201':
           description: Created document
           content:
             application/json:
@@ -123,7 +123,7 @@ paths:
                   format: uri
                   nullable: true
       responses:
-        '200':
+        '201':
           description: Queued document
           content:
             application/json:
@@ -152,7 +152,7 @@ paths:
                   maxLength: 255
                   description: Optional title; page title is used when omitted.
       responses:
-        '200':
+        '201':
           description: Queued document
           content:
             application/json:

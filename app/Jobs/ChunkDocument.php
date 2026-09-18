@@ -30,7 +30,7 @@ class ChunkDocument implements ShouldQueue
             ]);
         }
 
-        $this->document->update(['indexing_status' => 'ready']);
+        $this->document->update(['indexing_status' => 'completed']);
     }
 
     public function failed(Throwable $exception): void

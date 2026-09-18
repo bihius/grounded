@@ -14,7 +14,8 @@ class ChunkDocumentTest extends TestCase
 {
     public function test_it_stores_an_embedding_for_each_chunk(): void
     {
-        $document = new Document(['content' => 'Grounded document']);
+        $document = Mockery::mock(Document::class);
+        $document->shouldReceive('update')->twice();
         $chunk = (object) ['id' => 7, 'content' => 'Grounded chunk'];
         $chunker = Mockery::mock(DocumentChunker::class);
         $generator = Mockery::mock(EmbeddingGenerator::class);

@@ -111,9 +111,16 @@ function addSources(message: HTMLElement, sources: Source[]): void {
 
     const list = document.createElement('ul');
     list.className = 'sources';
-    list.innerHTML = `<strong>Źródła</strong>${sources
-        .map((source) => `<li>${source.title} - fragment ${source.position}</li>`)
-        .join('')}`;
+    const heading = document.createElement('strong');
+    heading.textContent = 'Źródła';
+    list.append(heading);
+
+    for (const source of sources) {
+        const item = document.createElement('li');
+        item.textContent = `${source.title} - fragment ${source.position}`;
+        list.append(item);
+    }
+
     message.append(list);
 }
 

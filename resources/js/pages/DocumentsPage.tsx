@@ -94,7 +94,7 @@ export default function DocumentsPage() {
                         placeholder="Tytuł dokumentu (opcjonalnie)"
                         className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-cyan-400/60 sm:flex-1"
                     />
-                    <input name="file" type="file" accept=".md,.markdown,.txt" required className="max-w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-slate-100" />
+                    <input name="file" type="file" accept=".md,.markdown,.txt,.pdf" required className="max-w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-slate-100" />
                     <button type="submit" disabled={isUploading} className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">
                         {isUploading ? 'Wysyłam…' : 'Dodaj'}
                     </button>

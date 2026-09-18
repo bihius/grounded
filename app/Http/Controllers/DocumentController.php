@@ -25,7 +25,15 @@ class DocumentController extends Controller
             'limit' => ['sometimes', 'integer', 'min:1', 'max:20'],
         ]);
 
-        return $search->search($data['q'], $data['limit'] ?? 5);
+        return $search->search($data['q'], $data['limit'] ?? 5)
+            ->map(fn ($chunk) => [
+                'title' => $chunk->title,
+                'document_id' => $chunk->document_id,
+                'position' => $chunk->position,
+                'distance' => $chunk->distance,
+                'excerpt' => $chunk->content,
+            ])
+            ->values();
     }
 
     public function store(Request $request)
@@ -36,7 +44,11 @@ class DocumentController extends Controller
             'source_url' => ['nullable', 'url'],
         ]);
 
-        return Document::create($data);
+        $data['indexing_status'] = 'queued';
+        $document = Document::create($data);
+        ChunkDocument::dispatch($document);
+
+        return response()->json($document, 201);
     }
 
     public function importUrl(Request $request)
@@ -61,7 +73,7 @@ class DocumentController extends Controller
         ]);
         ChunkDocument::dispatch($document);
 
-        return $document;
+        return response()->json($document, 201);
     }
 
     public function import(Request $request)
@@ -82,7 +94,7 @@ class DocumentController extends Controller
         $document = Document::create($data);
         ChunkDocument::dispatch($document);
 
-        return $document;
+        return response()->json($document, 201);
     }
 
     public function update(Request $request, Document $document)
