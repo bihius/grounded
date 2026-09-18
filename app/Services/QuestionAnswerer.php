@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Question;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -13,12 +14,17 @@ class QuestionAnswerer
 
     public function stream(string $question, int $limit = 5): StreamedResponse
     {
+        $questionRecord = Question::create(['question' => $question]);
         $chunks = $this->search->search($question, $limit)
             ->filter(fn ($chunk) => $chunk->distance <= config('services.rag.max_distance'))
             ->values();
 
-        return response()->stream(function () use ($question, $chunks): void {
+        return response()->stream(function () use ($question, $questionRecord, $chunks): void {
             if ($chunks->isEmpty()) {
+                $questionRecord->update([
+                    'answer' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.',
+                    'status' => 'needs_review',
+                ]);
                 echo 'data: '.json_encode(['type' => 'answer', 'content' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.'])."\n\n";
                 echo 'data: '.json_encode(['type' => 'done', 'sources' => []])."\n\n";
 
@@ -38,7 +44,7 @@ class QuestionAnswerer
                 ])
                 ->throw();
             $body = $response->toPsrResponse()->getBody();
-
+            $answer = '';
             $buffer = '';
             while (! $body->eof()) {
                 $buffer .= $body->read(8192);
@@ -48,12 +54,14 @@ class QuestionAnswerer
                     $buffer = substr($buffer, $newline + 1);
                     $data = json_decode($line, true);
                     if (($data['response'] ?? '') !== '') {
+                        $answer .= $data['response'];
                         echo 'data: '.json_encode(['type' => 'token', 'content' => $data['response']])."\n\n";
                         flush();
                     }
                 }
             }
 
+            $questionRecord->update(['answer' => $answer]);
             echo 'data: '.json_encode(['type' => 'done', 'sources' => $this->sources($chunks)])."\n\n";
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -64,13 +72,20 @@ class QuestionAnswerer
 
     public function answer(string $question, int $limit = 5): array
     {
+        $questionRecord = Question::create(['question' => $question]);
         $chunks = $this->search->search($question, $limit)
             ->filter(fn ($chunk) => $chunk->distance <= config('services.rag.max_distance'))
             ->values();
 
         if ($chunks->isEmpty()) {
+            $answer = 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.';
+            $questionRecord->update([
+                'answer' => $answer,
+                'status' => 'needs_review',
+            ]);
+
             return [
-                'answer' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.',
+                'answer' => $answer,
                 'sources' => [],
             ];
         }
@@ -87,6 +102,8 @@ class QuestionAnswerer
             ])
             ->throw()
             ->json('response');
+
+        $questionRecord->update(['answer' => $answer]);
 
         return [
             'answer' => $answer,

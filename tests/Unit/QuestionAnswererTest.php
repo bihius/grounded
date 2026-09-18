@@ -4,12 +4,15 @@ namespace Tests\Unit;
 
 use App\Services\QuestionAnswerer;
 use App\Services\SimilarChunkSearch;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use Tests\TestCase;
 
 class QuestionAnswererTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_it_answers_a_question_using_search_results(): void
     {
         config([
@@ -35,6 +38,11 @@ class QuestionAnswererTest extends TestCase
         $result = (new QuestionAnswerer($search))->answer('What is an ETF?');
 
         $this->assertSame('An ETF tracks an index. [ETF guide]', $result['answer']);
+        $this->assertDatabaseHas('questions', [
+            'question' => 'What is an ETF?',
+            'answer' => 'An ETF tracks an index. [ETF guide]',
+            'status' => 'answered',
+        ]);
         $this->assertSame('ETF guide', $result['sources'][0]['title']);
         $this->assertSame('An ETF tracks an index.', $result['sources'][0]['excerpt']);
         Http::assertSent(fn ($request) => str_contains($request['prompt'], 'An ETF tracks an index.')
@@ -58,6 +66,11 @@ class QuestionAnswererTest extends TestCase
             $result['answer']
         );
         $this->assertSame([], $result['sources']);
+        $this->assertDatabaseHas('questions', [
+            'question' => 'What is Kubernetes?',
+            'answer' => 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.',
+            'status' => 'needs_review',
+        ]);
         Http::assertNothingSent();
     }
 }
