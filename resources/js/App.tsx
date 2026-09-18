@@ -1,11 +1,13 @@
 import ChatPage from './pages/ChatPage';
 import DocumentsPage from './pages/DocumentsPage';
 import ReviewPage from './pages/ReviewPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 const pages = [
     { path: '/', label: 'Czat', heading: 'Zapytaj bazę wiedzy', Page: ChatPage },
     { path: '/documents', label: 'Dokumenty', heading: 'Dokumenty bazy wiedzy', Page: DocumentsPage },
     { path: '/questions', label: 'Do uzupełnienia', heading: 'Pytania bez odpowiedzi', Page: ReviewPage },
+    { path: '/analytics', label: 'Analityka', heading: 'Analityka pytań', Page: AnalyticsPage },
 ];
 
 export default function App() {

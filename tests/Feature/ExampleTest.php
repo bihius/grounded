@@ -12,6 +12,7 @@ class ExampleTest extends TestCase
             'chat' => ['/'],
             'documents' => ['/documents'],
             'questions' => ['/questions'],
+            'analytics' => ['/analytics'],
         ];
     }
 

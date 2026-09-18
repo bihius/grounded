@@ -34,3 +34,27 @@ export type StreamEvent =
     | { type: 'token'; content: string }
     | { type: 'answer'; content: string }
     | { type: 'done'; question_id: number; sources: Source[] };
+
+export type QuestionAnalytics = {
+    summary: {
+        total: number;
+        answered: number;
+        needs_review: number;
+        resolved: number;
+        positive_ratings: number;
+        negative_ratings: number;
+        unrated: number;
+    };
+    most_asked: {
+        question: string;
+        count: number;
+    }[];
+    similar_groups: {
+        count: number;
+        questions: {
+            id: number;
+            question: string;
+        }[];
+    }[];
+    needs_review: ReviewQuestion[];
+};

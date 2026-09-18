@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome');
 Route::view('/documents', 'welcome');
 Route::view('/questions', 'welcome');
+Route::view('/analytics', 'welcome');
 
 // A preview of the widget embedded on a page outside the application.
 Route::view('/widget-demo', 'widget-demo');
