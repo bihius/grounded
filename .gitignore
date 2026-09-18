@@ -12,3 +12,4 @@
 /public/build
 .venv
 .ipynb_checkpoints
+/.phpunit.result.cache
