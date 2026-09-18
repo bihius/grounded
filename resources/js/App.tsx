@@ -13,6 +13,8 @@ type Message = {
     role: 'user' | 'assistant';
     content: string;
     sources?: Source[];
+    questionId?: number;
+    feedback?: 0 | 1;
 };
 
 type Document = {
@@ -26,7 +28,7 @@ type Document = {
 type StreamEvent =
     | { type: 'token'; content: string }
     | { type: 'answer'; content: string }
-    | { type: 'done'; sources: Source[] };
+    | { type: 'done'; question_id: number; sources: Source[] };
 
 function renderInlineMarkdown(text: string): ReactNode[] {
     return text.split(/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*]+\*|_[^_]+_)/g).map((part, index) => {
@@ -202,6 +204,19 @@ export default function App() {
         }
     }
 
+    async function sendFeedback(messageId: number, questionId: number, rating: 0 | 1) {
+        const response = await fetch(`/api/questions/${questionId}/feedback`, {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating }),
+        });
+
+        if (!response.ok) throw new Error('Nie udało się zapisać oceny.');
+        setMessages((current) => current.map((message) =>
+            message.id === messageId ? { ...message, feedback: rating } : message,
+        ));
+    }
+
     function handleEvent(event: string, assistantId: number) {
         const line = event.split('\n').find((item) => item.startsWith('data: '));
         if (!line) return;
@@ -218,7 +233,7 @@ export default function App() {
         if (payload.type === 'done') {
             setMessages((current) => current.map((message) =>
                 message.id === assistantId
-                    ? { ...message, sources: payload.sources }
+                    ? { ...message, questionId: payload.question_id, sources: payload.sources }
                     : message,
             ));
         }
@@ -321,6 +336,28 @@ export default function App() {
                                                         </div>
                                                     ))}
                                                 </div>
+                                            </div>
+                                        )}
+                                        {message.role === 'assistant' && message.questionId && (
+                                            <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
+                                                <span>Odpowiedź była pomocna?</span>
+                                                <button
+                                                    type="button"
+                                                    disabled={message.feedback !== undefined}
+                                                    onClick={() => sendFeedback(message.id, message.questionId!, 1).catch((caught) => setError(caught instanceof Error ? caught.message : 'Wystąpił nieznany błąd.'))}
+                                                    className="rounded-lg border border-slate-700 px-2 py-1 transition hover:border-emerald-400 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    👍
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={message.feedback !== undefined}
+                                                    onClick={() => sendFeedback(message.id, message.questionId!, 0).catch((caught) => setError(caught instanceof Error ? caught.message : 'Wystąpił nieznany błąd.'))}
+                                                    className="rounded-lg border border-slate-700 px-2 py-1 transition hover:border-rose-400 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    👎
+                                                </button>
+                                                {message.feedback !== undefined && <span className="text-slate-500">Dziękuję za ocenę.</span>}
                                             </div>
                                         )}
                                     </div>
