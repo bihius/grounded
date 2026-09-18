@@ -1,0 +1,481 @@
+openapi: 3.1.0
+info:
+  title: Grounded API
+  version: 1.0.0
+  description: |
+    REST API aplikacji Grounded. Aplikacja importuje dokumenty, buduje ich
+    embeddingi i odpowiada na pytania na podstawie znalezionych fragmentów.
+servers:
+  - url: http://localhost:8000/api
+    description: Lokalna instancja developerska
+
+tags:
+  - name: Chat
+  - name: Documents
+  - name: Questions
+
+paths:
+  /chat:
+    post:
+      tags: [Chat]
+      summary: Answer a question using the knowledge base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              question: Czym jest ETF?
+              limit: 3
+      responses:
+        '200':
+          description: Generated answer and matching sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /chat/stream:
+    post:
+      tags: [Chat]
+      summary: Stream an answer using Server-Sent Events
+      description: |
+        Zwraca strumień SSE. Każda wiadomość ma format `data: JSON` i jest
+        oddzielona pustą linią. Event `done` zawiera `question_id` oraz źródła.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Stream of answer events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                answer:
+                  value: |-
+                    data: {"type":"token","content":"ETF to fundusz"}
+
+                    data: {"type":"done","question_id":12,"sources":[]}
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents:
+    get:
+      tags: [Documents]
+      summary: List imported documents
+      responses:
+        '200':
+          description: Documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+    post:
+      tags: [Documents]
+      summary: Create a document from text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      responses:
+        '200':
+          description: Created document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents/import:
+    post:
+      tags: [Documents]
+      summary: Import a Markdown, text or PDF file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, file]
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                file:
+                  type: string
+                  format: binary
+                  description: Plik MD, Markdown, TXT albo PDF.
+                source_url:
+                  type: string
+                  format: uri
+                  nullable: true
+      responses:
+        '200':
+          description: Queued document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents/import-url:
+    post:
+      tags: [Documents]
+      summary: Import the main text from a web page
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                title:
+                  type: string
+                  maxLength: 255
+                  description: Optional title; page title is used when omitted.
+      responses:
+        '200':
+          description: Queued document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /documents/{document}:
+    parameters:
+      - $ref: '#/components/parameters/DocumentId'
+    put:
+      tags: [Documents]
+      summary: Update a document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUpdate'
+      responses:
+        '200':
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    patch:
+      tags: [Documents]
+      summary: Partially update a document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUpdate'
+      responses:
+        '200':
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+    delete:
+      tags: [Documents]
+      summary: Delete a document
+      responses:
+        '204':
+          description: Document deleted
+
+  /documents/{document}/chunk:
+    post:
+      tags: [Documents]
+      summary: Preview document chunks
+      parameters:
+        - $ref: '#/components/parameters/DocumentId'
+      responses:
+        '200':
+          description: Generated chunks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /search:
+    get:
+      tags: [Documents]
+      summary: Find similar document chunks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+      responses:
+        '200':
+          description: Similar chunks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /questions:
+    get:
+      tags: [Questions]
+      summary: List questions
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [answered, needs_review, resolved]
+      responses:
+        '200':
+          description: Questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+
+  /questions/{question}/feedback:
+    post:
+      tags: [Questions]
+      summary: Rate an answer
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                  enum: [0, 1]
+                  description: 1 means useful, 0 means not useful.
+                feedback:
+                  type: string
+                  maxLength: 2000
+                  nullable: true
+      responses:
+        '200':
+          description: Updated question
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /questions/{question}/resolve:
+    post:
+      tags: [Questions]
+      summary: Add knowledge for a question requiring review
+      parameters:
+        - $ref: '#/components/parameters/QuestionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInput'
+      responses:
+        '200':
+          description: Resolved question and queued document
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [question, document]
+                properties:
+                  question:
+                    $ref: '#/components/schemas/Question'
+                  document:
+                    $ref: '#/components/schemas/Document'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  parameters:
+    DocumentId:
+      name: document
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    QuestionId:
+      name: question
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+  schemas:
+    ChatRequest:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+
+    Source:
+      type: object
+      required: [title, document_id, position, distance, excerpt]
+      properties:
+        title:
+          type: string
+        document_id:
+          type: integer
+        position:
+          type: integer
+        distance:
+          type: number
+          format: double
+        excerpt:
+          type: string
+
+    ChatResponse:
+      type: object
+      required: [answer, sources]
+      properties:
+        answer:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+
+    DocumentInput:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        source_url:
+          type: string
+          format: uri
+          nullable: true
+
+    DocumentUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        source_url:
+          type: string
+          format: uri
+          nullable: true
+
+    Document:
+      allOf:
+        - $ref: '#/components/schemas/DocumentInput'
+        - type: object
+          required: [id, indexing_status]
+          properties:
+            id:
+              type: integer
+            indexing_status:
+              type: string
+              enum: [queued, processing, completed, failed]
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    Question:
+      type: object
+      required: [id, question, status]
+      properties:
+        id:
+          type: integer
+        question:
+          type: string
+        answer:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [answered, needs_review, resolved]
+        rating:
+          type: integer
+          enum: [0, 1]
+          nullable: true
+        feedback:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
