@@ -43,6 +43,7 @@ return [
 
     'rag' => [
         'max_distance' => (float) env('RAG_MAX_DISTANCE', 0.6),
+        'question_similarity' => (float) env('RAG_QUESTION_SIMILARITY', 0.8),
     ],
 
 ];

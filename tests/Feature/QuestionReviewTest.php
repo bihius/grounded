@@ -12,6 +12,22 @@ class QuestionReviewTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_question_analytics_returns_summary_and_repeated_questions(): void
+    {
+        Question::create(['question' => 'What is an ETF?', 'status' => 'answered', 'rating' => 1]);
+        Question::create(['question' => 'What is an ETF?', 'status' => 'needs_review', 'rating' => 0]);
+
+        $this->getJson('/api/analytics/questions')
+            ->assertOk()
+            ->assertJsonPath('summary.total', 2)
+            ->assertJsonPath('summary.answered', 1)
+            ->assertJsonPath('summary.needs_review', 1)
+            ->assertJsonPath('summary.positive_ratings', 1)
+            ->assertJsonPath('summary.negative_ratings', 1)
+            ->assertJsonPath('most_asked.0.question', 'What is an ETF?')
+            ->assertJsonPath('most_asked.0.count', 2);
+    }
+
     public function test_questions_can_be_filtered_for_review(): void
     {
         Question::create(['question' => 'Unanswered question', 'status' => 'needs_review']);

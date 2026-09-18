@@ -251,6 +251,21 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
+  /analytics/questions:
+    get:
+      tags: [Questions]
+      summary: Return question analytics and semantic groups
+      description: |
+        Zwraca statystyki pytań, najczęściej powtarzane pytania oraz grupy
+        pytań podobnych semantycznie na podstawie embeddingów bge-m3.
+      responses:
+        '200':
+          description: Question analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionAnalytics'
+
   /questions:
     get:
       tags: [Questions]
@@ -451,6 +466,60 @@ components:
             updated_at:
               type: string
               format: date-time
+
+    QuestionAnalytics:
+      type: object
+      required: [summary, most_asked, similar_groups, needs_review]
+      properties:
+        summary:
+          type: object
+          properties:
+            total:
+              type: integer
+            answered:
+              type: integer
+            needs_review:
+              type: integer
+            resolved:
+              type: integer
+            positive_ratings:
+              type: integer
+            negative_ratings:
+              type: integer
+            unrated:
+              type: integer
+        most_asked:
+          type: array
+          items:
+            type: object
+            required: [question, count]
+            properties:
+              question:
+                type: string
+              count:
+                type: integer
+        similar_groups:
+          type: array
+          items:
+            type: object
+            required: [count, questions]
+            properties:
+              count:
+                type: integer
+              questions:
+                type: array
+                items:
+                  type: object
+                  required: [id, question]
+                  properties:
+                    id:
+                      type: integer
+                    question:
+                      type: string
+        needs_review:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
 
     Question:
       type: object

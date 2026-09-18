@@ -5,10 +5,16 @@ namespace App\Http\Controllers;
 use App\Jobs\ChunkDocument;
 use App\Models\Document;
 use App\Models\Question;
+use App\Services\QuestionAnalytics;
 use Illuminate\Http\Request;
 
 class QuestionController extends Controller
 {
+    public function analytics(QuestionAnalytics $analytics)
+    {
+        return $analytics->report();
+    }
+
     public function index(Request $request)
     {
         $status = $request->query('status');
