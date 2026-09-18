@@ -3,6 +3,7 @@
 /.env
 /AGENTS.md
 /docs/PLAN.md
+/tests/Fixtures/ETF-notatka-letnia-szkola-gieldowa.md
 /database/*.sqlite
 /storage/*.key
 /storage/framework/views/*
@@ -11,3 +12,4 @@
 /public/build
 .venv
 .ipynb_checkpoints
+/.phpunit.result.cache

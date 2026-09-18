@@ -5,15 +5,8 @@ services:
       dockerfile: Dockerfile
     working_dir: /var/www/html
     command: php artisan serve --host=0.0.0.0 --port=8000
-    environment:
-      CACHE_STORE: file
-      DB_CONNECTION: pgsql
-      DB_DATABASE: grounded
-      DB_HOST: postgres
-      DB_PASSWORD: grounded
-      DB_PORT: 5432
-      DB_USERNAME: grounded
-      SESSION_DRIVER: file
+    env_file:
+      - .env
     volumes:
       - .:/var/www/html
     ports:
@@ -22,12 +15,24 @@ services:
       - postgres
       - redis
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --sleep=1 --tries=3 --timeout=120
+    env_file:
+      - .env
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+
   postgres:
     image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_DB: grounded
-      POSTGRES_USER: grounded
-      POSTGRES_PASSWORD: grounded
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
