@@ -3,11 +3,11 @@ info:
   title: Grounded API
   version: 1.0.0
   description: |
-    REST API aplikacji Grounded. Aplikacja importuje dokumenty, buduje ich
-    embeddingi i odpowiada na pytania na podstawie znalezionych fragmentów.
+    REST API for Grounded. The application imports documents, generates their
+    embeddings, and answers questions using retrieved document fragments.
 servers:
   - url: http://localhost:8000/api
-    description: Lokalna instancja developerska
+    description: Local development instance
 
 tags:
   - name: Chat
@@ -43,8 +43,8 @@ paths:
       tags: [Chat]
       summary: Stream an answer using Server-Sent Events
       description: |
-        Zwraca strumień SSE. Każda wiadomość ma format `data: JSON` i jest
-        oddzielona pustą linią. Event `done` zawiera `question_id` oraz źródła.
+        Returns an SSE stream. Each message has the `data: JSON` format and is
+        separated by a blank line. The `done` event contains `question_id` and sources.
       requestBody:
         required: true
         content:
@@ -117,7 +117,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Plik MD, Markdown, TXT albo PDF.
+                  description: An MD, Markdown, TXT, or PDF file.
                 source_url:
                   type: string
                   format: uri
@@ -256,8 +256,8 @@ paths:
       tags: [Questions]
       summary: Return question analytics and semantic groups
       description: |
-        Zwraca statystyki pytań, najczęściej powtarzane pytania oraz grupy
-        pytań podobnych semantycznie na podstawie embeddingów bge-m3.
+        Returns question statistics, the most frequently repeated questions,
+        and semantically similar question groups based on bge-m3 embeddings.
       responses:
         '200':
           description: Question analytics
