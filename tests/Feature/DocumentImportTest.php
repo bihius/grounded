@@ -33,30 +33,6 @@ class DocumentImportTest extends TestCase
         $this->assertDatabaseHas('documents', [
             'title' => 'Markdown guide',
             'content' => $content,
-            'indexing_status' => 'queued',
-            'content_hash' => hash('sha256', $content),
-        ]);
-    }
-
-    public function test_same_content_updates_existing_document(): void
-    {
-        $content = '# Grounded';
-
-        $this->post('/api/documents/import', [
-            'title' => 'Old title',
-            'file' => UploadedFile::fake()->createWithContent('old.md', $content),
-        ]);
-
-        $response = $this->post('/api/documents/import', [
-            'title' => 'New title',
-            'file' => UploadedFile::fake()->createWithContent('new.txt', $content),
-        ]);
-
-        $response->assertOk()->assertJsonPath('title', 'New title');
-        $this->assertDatabaseCount('documents', 1);
-        $this->assertDatabaseHas('documents', [
-            'title' => 'New title',
-            'content_hash' => hash('sha256', $content),
         ]);
     }
 

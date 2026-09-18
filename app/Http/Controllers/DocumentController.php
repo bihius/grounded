@@ -13,7 +13,7 @@ class DocumentController extends Controller
 {
     public function index()
     {
-        return Document::query()->latest()->get();
+        return Document::all();
     }
 
     public function search(Request $request, SimilarChunkSearch $search)
@@ -49,18 +49,13 @@ class DocumentController extends Controller
         $data['content'] = strtolower($file->getClientOriginalExtension()) === 'pdf'
             ? (new Parser)->parseFile($file->getRealPath())->getText()
             : $file->get();
-        $data['content_hash'] = hash('sha256', $data['content']);
         unset($data['file']);
 
-        $document = Document::firstOrNew(['content_hash' => $data['content_hash']]);
-        $created = ! $document->exists;
-        $document->fill($data);
-        $document->indexing_status = 'queued';
-        $document->save();
-
+        $data['indexing_status'] = 'queued';
+        $document = Document::create($data);
         ChunkDocument::dispatch($document);
 
-        return response()->json($document, $created ? 201 : 200);
+        return $document;
     }
 
     public function update(Request $request, Document $document)
