@@ -50,12 +50,34 @@ class QuestionAnswererTest extends TestCase
             && $request['stream'] === false);
     }
 
+    public function test_it_keeps_every_retrieved_chunk_when_the_closest_one_is_relevant(): void
+    {
+        config([
+            'services.ollama.url' => 'http://ollama.test',
+            'services.rag.max_distance' => 0.6,
+        ]);
+        $search = Mockery::mock(SimilarChunkSearch::class);
+        $search->expects('search')->with('What is an ETF?', 3)->andReturn(collect([
+            (object) ['title' => 'ETF guide', 'content' => 'A', 'document_id' => 3, 'position' => 1, 'distance' => 0.45],
+            (object) ['title' => 'ETF guide', 'content' => 'B', 'document_id' => 3, 'position' => 2, 'distance' => 0.58],
+            (object) ['title' => 'ETF guide', 'content' => 'C', 'document_id' => 3, 'position' => 3, 'distance' => 0.71],
+        ]));
+        Http::fake([
+            'http://ollama.test/api/generate' => Http::response(['response' => 'An ETF tracks an index.']),
+        ]);
+
+        $result = (new QuestionAnswerer($search))->answer('What is an ETF?', 3);
+
+        $this->assertCount(3, $result['sources']);
+    }
+
     public function test_it_says_it_does_not_know_when_chunks_are_too_distant(): void
     {
-        config(['services.rag.max_distance' => 0.4]);
+        config(['services.rag.max_distance' => 0.6]);
         $search = Mockery::mock(SimilarChunkSearch::class);
         $search->expects('search')->with('What is Kubernetes?', 5)->andReturn(collect([
             (object) ['distance' => 0.8],
+            (object) ['distance' => 0.9],
         ]));
         Http::fake();
 

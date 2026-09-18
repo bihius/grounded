@@ -15,9 +15,7 @@ class QuestionAnswerer
     public function stream(string $question, int $limit = 5): StreamedResponse
     {
         $questionRecord = Question::create(['question' => $question]);
-        $chunks = $this->search->search($question, $limit)
-            ->filter(fn ($chunk) => $chunk->distance <= config('services.rag.max_distance'))
-            ->values();
+        $chunks = $this->relevantChunks($question, $limit);
 
         return response()->stream(function () use ($question, $questionRecord, $chunks): void {
             if ($chunks->isEmpty()) {
@@ -81,9 +79,7 @@ class QuestionAnswerer
     public function answer(string $question, int $limit = 5): array
     {
         $questionRecord = Question::create(['question' => $question]);
-        $chunks = $this->search->search($question, $limit)
-            ->filter(fn ($chunk) => $chunk->distance <= config('services.rag.max_distance'))
-            ->values();
+        $chunks = $this->relevantChunks($question, $limit);
 
         if ($chunks->isEmpty()) {
             $answer = 'Nie znalazłem wystarczająco podobnych informacji w bazie wiedzy.';
@@ -117,6 +113,21 @@ class QuestionAnswerer
             'answer' => $answer,
             'sources' => $this->sources($chunks),
         ];
+    }
+
+    /**
+     * The distance threshold only decides whether the question is covered at all — it is
+     * applied to the closest match. The remaining hits stay in the context (and in the
+     * sources) so the answer is never built on a silently truncated set of chunks.
+     */
+    private function relevantChunks(string $question, int $limit): Collection
+    {
+        $chunks = $this->search->search($question, $limit)->values();
+        $closest = $chunks->first();
+
+        return $closest && $closest->distance <= config('services.rag.max_distance')
+            ? $chunks
+            : collect();
     }
 
     private function sources(Collection $chunks): Collection
