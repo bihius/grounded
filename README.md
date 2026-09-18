@@ -22,3 +22,24 @@ docker compose up -d
 ```
 
 Details will appear here once the first working stage is complete.
+
+## Embeddable Widget
+
+Any page can host the assistant with a single line:
+
+```html
+<script src="https://grounded.example/widget.js" data-title="Ask about ETFs" defer></script>
+```
+
+The widget is plain TypeScript in a shadow root (~4.5 kB) rather than the React
+bundle, so it neither carries the application's styles nor inherits the host's.
+Optional attributes: `data-api` (API base URL, defaults to the script's origin),
+`data-title`, `data-accent`.
+
+Rebuild it after changing `resources/js/widget.ts`:
+
+```bash
+npm run build:widget         # writes public/widget.js
+```
+
+See it embedded on a page that is not the application at `/widget-demo`.
