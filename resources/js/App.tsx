@@ -74,16 +74,24 @@ export default function App() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [title, setTitle] = useState('');
+    const [url, setUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetch('/api/documents')
-            .then((response) => response.json())
-            .then(setDocuments)
-            .catch(() => setError('Nie udało się pobrać listy dokumentów.'));
+        const loadDocuments = () => {
+            fetch('/api/documents')
+                .then((response) => response.json())
+                .then(setDocuments)
+                .catch(() => setError('Nie udało się pobrać listy dokumentów.'));
+        };
+
+        loadDocuments();
+        const interval = window.setInterval(loadDocuments, 3000);
+
+        return () => window.clearInterval(interval);
     }, []);
 
     useEffect(() => {
@@ -109,6 +117,31 @@ export default function App() {
             setDocuments((current) => [document, ...current]);
             setTitle('');
             form.reset();
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Wystąpił nieznany błąd.');
+        } finally {
+            setIsUploading(false);
+        }
+    }
+
+    async function importUrl(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const value = url.trim();
+        if (!value || isUploading) return;
+
+        setError('');
+        setIsUploading(true);
+        try {
+            const response = await fetch('/api/documents/import-url', {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: value, title: title.trim() || undefined }),
+            });
+            if (!response.ok) throw new Error('Nie udało się pobrać strony.');
+            const document = await response.json() as Document;
+            setDocuments((current) => [document, ...current]);
+            setUrl('');
+            setTitle('');
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Wystąpił nieznany błąd.');
         } finally {
@@ -226,6 +259,19 @@ export default function App() {
                                 {isUploading ? 'Wysyłam…' : 'Dodaj'}
                             </button>
                         </form>
+                        <form onSubmit={importUrl} className="flex flex-col gap-2 sm:flex-row">
+                            <input
+                                type="url"
+                                value={url}
+                                onChange={(event) => setUrl(event.target.value)}
+                                placeholder="https://example.com/artykul"
+                                required
+                                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-cyan-400/60 sm:flex-1"
+                            />
+                            <button type="submit" disabled={isUploading} className="rounded-lg border border-cyan-400/50 px-4 py-2 text-sm font-semibold text-cyan-300 disabled:cursor-not-allowed disabled:opacity-40">
+                                {isUploading ? 'Pobieram…' : 'Dodaj URL'}
+                            </button>
+                        </form>
                         {documents.length > 0 && (
                             <div className="grid gap-2 sm:grid-cols-2">
                                 {documents.map((document) => (
@@ -271,7 +317,7 @@ export default function App() {
                                                                 <span className="font-medium text-cyan-300">{source.title}</span>
                                                                 <span className="text-xs text-slate-500">chunk {source.position} · dystans {source.distance.toFixed(3)}</span>
                                                             </div>
-                                                            <p className="mt-2 text-sm leading-6 text-slate-400">{source.excerpt}</p>
+                                                            <div className="mt-2 text-sm leading-6 text-slate-400"><MarkdownMessage content={source.excerpt} /></div>
                                                         </div>
                                                     ))}
                                                 </div>
