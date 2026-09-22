@@ -43,6 +43,19 @@ The threshold applies only to the closest chunk. Once a question counts as cover
 
 The default of `0.6` is specific to `bge-m3`, whose distances cluster in a narrow band: in this repository's documents, genuinely relevant chunks measure 0.45–0.52 and unrelated ones sit above 0.7. A different embedding model needs a different number, found by measuring.
 
+## Screenshot
+
+![Answer with cited sources](docs/screenshots/chat-answer-with-sources.png)
+
+The chat view after a question. The answer is followed by the chunks it was built from — each
+one links back to its document and shows its cosine distance, so it is visible how close the
+retrieval actually was.
+
+The knowledge base here was built by importing public pages from a university website
+(`studia-online.pl`) as a demo corpus; the project is not affiliated with it. The first chunk
+also shows a limitation described below: text imported from a web page still carries leftover
+CSS, because extraction is not structure-aware.
+
 ## Tech Stack
 
 | Choice | Reason |

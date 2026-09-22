@@ -18,13 +18,14 @@ export default function ChatPage() {
         const text = question.trim();
         if (!text || isLoading) return;
 
-        const assistantId = Date.now() + 1;
+        const userId = Date.now();
+        const assistantId = userId + 1;
         setQuestion('');
         setError('');
         setIsLoading(true);
         setMessages((current) => [
             ...current,
-            { id: Date.now(), role: 'user', content: text },
+            { id: userId, role: 'user', content: text },
             { id: assistantId, role: 'assistant', content: '', sources: [] },
         ]);
 
