@@ -41,7 +41,7 @@ An embedding search always returns its *n* closest chunks, even when the knowled
 
 The threshold applies only to the closest chunk. Once a question counts as covered, every retrieved chunk stays in the context and in the source list — filtering each one separately would silently shrink the context and produce answers built on a fragment of the evidence.
 
-The default of `0.6` is specific to `bge-m3`, whose distances cluster in a narrow band: in this repository's documents, genuinely relevant chunks measure 0.45–0.52 and unrelated ones sit above 0.7. A different embedding model needs a different number, found by measuring.
+The default of `0.54` was measured, not guessed. `bge-m3` packs its distances into a narrow band, so the number has to come from the corpus: in this repository's documents, questions the documents answer land between **0.39 and 0.52**, while off-topic questions (bread starter, football, capital cities) land between **0.58 and 0.64**. The default sits in that gap. A different embedding model, or a corpus covering more ground, shifts both bands — measure with `GET /api/search`, which returns distances without generating an answer.
 
 ## Screenshot
 
@@ -269,10 +269,21 @@ The variables that matter, from `.env.example`:
 | `REDIS_QUEUE_RETRY_AFTER` | `180` | Seconds before Redis re-delivers a job. Must stay above the worker `--timeout` (120). |
 | `OLLAMA_EMBEDDING_MODEL` | `bge-m3` | Model used for both document chunks and questions. Its output dimension must match the `vector(1024)` column. |
 | `OLLAMA_CHAT_MODEL` | `qwen3:8b` | Model that writes the answer from the retrieved context. |
-| `RAG_MAX_DISTANCE` | `0.6` | Cosine distance above which the closest chunk counts as irrelevant and the assistant declines to answer. Model-specific. |
+| `RAG_MAX_DISTANCE` | `0.54` | Cosine distance above which the closest chunk counts as irrelevant and the assistant declines to answer. Model-specific. |
 | `RAG_QUESTION_SIMILARITY` | `0.8` | Cosine similarity at which two questions are grouped as asking the same thing in the analytics view. Not present in `.env.example`; read from the environment with this default. |
 | `DB_*`, `POSTGRES_*` | `grounded` | Database credentials. Both sets exist because Laravel reads one and the Postgres image reads the other from the same file. |
 | `QUEUE_CONNECTION` | `redis` | Indexing runs through the queue. Setting this to `sync` makes uploads block until embedding finishes. |
+
+### Changing `.env`
+
+`docker-compose.yml` passes `.env` to the containers with `env_file`, which copies the values
+into the container environment **when the container is created**. Editing `.env` afterwards
+changes nothing in a running stack, and the mounted file does not win either: Laravel's dotenv
+loader does not override variables that already exist in the real environment. Apply changes with
+
+```bash
+docker compose up -d --force-recreate app worker
+```
 
 ## Choosing Models
 
